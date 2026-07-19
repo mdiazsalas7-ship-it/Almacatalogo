@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import FotoProducto from "./FotoProducto";
 import { MARCA, WHATSAPP, fmtPrecio } from "@/lib/config";
@@ -7,13 +7,51 @@ import { MARCA, WHATSAPP, fmtPrecio } from "@/lib/config";
 export default function FichaProducto({ producto: p }) {
   const [talla, setTalla] = useState(null);
 
-  const v = talla ? p.variants.find((x) => x.talla === talla) : null;
-  const agotadoTotal = p.variants.every((x) => x.stock === 0);
+  // Colores presentes en las variantes (null si la prenda es de un solo color)
+  const colores = useMemo(() => {
+    const set = [...new Set(p.variants.map((v) => v.color).filter(Boolean))];
+    return set.length ? set : null;
+  }, [p.variants]);
+
+  const [color, setColor] = useState(colores?.[0] ?? null);
+
+  // Variantes visibles según el color elegido
+  const variantesActivas = useMemo(
+    () => (color ? p.variants.filter((v) => v.color === color) : p.variants),
+    [p.variants, color]
+  );
+
+  // Al cambiar de color, la talla elegida puede no existir o estar agotada
+  function elegirColor(c) {
+    setColor(c);
+    if (talla) {
+      const sigue = p.variants.some(
+        (v) => v.color === c && v.talla === talla && v.stock > 0
+      );
+      if (!sigue) setTalla(null);
+    }
+  }
+
+  const v = talla ? variantesActivas.find((x) => x.talla === talla) : null;
+  const agotadoTotal = variantesActivas.every((x) => x.stock === 0);
+
+  // Fotos del color elegido; si no hay etiquetadas para ese color,
+  // caemos a las fotos generales (sin color), y si tampoco hay, a todas.
+  const fotos = useMemo(() => {
+    const todas = p.imagenes?.length ? p.imagenes : [null];
+    if (!color) return todas;
+    const delColor = todas.filter((img) => img?.color === color);
+    if (delColor.length) return delColor;
+    const generales = todas.filter((img) => !img?.color);
+    return generales.length ? generales : todas;
+  }, [p.imagenes, color]);
+
   const sku = v ? v.sku : p.id.toUpperCase();
   const msg = encodeURIComponent(
-    `Hola, me interesa ${p.nombre} (${sku})${talla ? `, talla ${talla}` : ""}`
+    `Hola, me interesa ${p.nombre} (${sku})` +
+      (color ? `, color ${color}` : "") +
+      (talla ? `, talla ${talla}` : "")
   );
-  const fotos = p.imagenes?.length ? p.imagenes : [null];
 
   return (
     <div className="contenedor">
@@ -39,6 +77,7 @@ export default function FichaProducto({ producto: p }) {
       </div>
 
       <div
+        key={color ?? "unico"}
         className="sin-scrollbar"
         style={{ display: "flex", overflowX: "auto", scrollSnapType: "x mandatory" }}
       >
@@ -73,11 +112,34 @@ export default function FichaProducto({ producto: p }) {
           {p.id.toUpperCase()}
         </p>
 
+        {colores && (
+          <>
+            <p style={{ fontSize: 13, color: "#6E6A5E", marginBottom: 8, letterSpacing: "0.04em" }}>
+              Color
+            </p>
+            <div className="sin-scrollbar" style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto" }}>
+              {colores.map((c) => {
+                const sinStock = !p.variants.some((v) => v.color === c && v.stock > 0);
+                return (
+                  <button
+                    key={c}
+                    className={`chip ${color === c ? "activo" : ""}`}
+                    disabled={sinStock}
+                    onClick={() => elegirColor(c)}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         <p style={{ fontSize: 13, color: "#6E6A5E", marginBottom: 8, letterSpacing: "0.04em" }}>
           Talla
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          {p.variants.map((x) => (
+          {variantesActivas.map((x) => (
             <button
               key={x.sku}
               className={`chip ${talla === x.talla ? "activo" : ""}`}
@@ -90,7 +152,8 @@ export default function FichaProducto({ producto: p }) {
         </div>
         {v && v.stock <= 2 && (
           <p style={{ fontSize: 12, color: "var(--alerta)", marginBottom: 4 }}>
-            {v.stock === 1 ? "Última pieza en esta talla" : `Quedan ${v.stock} en esta talla`}
+            {v.stock === 1 ? "Última pieza" : `Quedan ${v.stock}`}
+            {color ? ` en ${color} talla ${talla}` : " en esta talla"}
           </p>
         )}
 
@@ -102,7 +165,7 @@ export default function FichaProducto({ producto: p }) {
           style={{ marginTop: 16 }}
         >
           {agotadoTotal
-            ? "Agotado"
+            ? color ? `Agotado en ${color}` : "Agotado"
             : talla
             ? `Pedir talla ${talla} por WhatsApp`
             : "Pedir por WhatsApp"}

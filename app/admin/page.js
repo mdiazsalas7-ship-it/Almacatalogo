@@ -240,6 +240,7 @@ function Inventario({ productos, onVender, onAjustar }) {
           padding: "8px 0", borderTop: "1px solid var(--linea)", fontSize: 13.5,
         }}>
           <span style={{ width: 30 }}>{v.talla}</span>
+          {v.color && <span style={{ width: 90, color: "var(--piedra)", fontSize: 12 }}>{v.color}</span>}
           <span style={{
             width: 34, textAlign: "center", fontWeight: 500,
             color: v.stock === 0 ? "#8C3A1E" : "inherit",
@@ -285,15 +286,33 @@ function NuevaPrenda({ onGuardado }) {
     id: "", nombre: "", precio: "", categoria: "blusas",
     descripcion: "", tela: "", modelo: "", cuidado: "",
   });
-  const [tallas, setTallas] = useState({ S: "", M: "", L: "" });
-  const [archivos, setArchivos] = useState([]);
+  const [coloresTxt, setColoresTxt] = useState("");
+  const [stock, setStock] = useState({}); // { "Rojo|M": "3" } o { "|M": "3" } sin colores
+  const [archivos, setArchivos] = useState({}); // { "Rojo": FileList } o { "": FileList }
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState("");
 
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
+  const colores = coloresTxt
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+  const grupos = colores.length ? colores : [""]; // "" = sin color
+
   const slug = f.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+
+  const claveStock = (color, talla) => `${color}|${talla}`;
+
+  function skuDe(id, color, talla) {
+    const base = id.toUpperCase().replace("-", "");
+    const c = color
+      ? "-" + color.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9]/g, "").slice(0, 6)
+      : "";
+    return `${base}${c}-${talla}`;
+  }
 
   async function guardar(e) {
     e.preventDefault();
@@ -305,26 +324,29 @@ function NuevaPrenda({ onGuardado }) {
     if (!f.nombre.trim()) return setError("Falta el nombre");
     const precio = Number(f.precio);
     if (!precio || precio <= 0) return setError("El precio debe ser un número mayor a 0");
-    const conStock = Object.entries(tallas).filter(([, v]) => v !== "");
-    if (!conStock.length) return setError("Pon el stock de al menos una talla");
+
+    const entradas = Object.entries(stock).filter(([, val]) => val !== "");
+    if (!entradas.length) return setError("Pon el stock de al menos una talla");
 
     setSubiendo(true);
     try {
-      // 1. Fotos: comprimir y subir a Storage
+      // 1. Fotos por color (o generales si la prenda no tiene colores)
       const imagenes = [];
-      for (let i = 0; i < archivos.length; i++) {
-        const comprimida = await imageCompression(archivos[i], {
-          maxSizeMB: 0.4, maxWidthOrHeight: 1600, useWebWorker: true,
-        });
-        const ruta = `products/${id}/${Date.now()}-${i}.jpg`;
-        const r = sRef(storage, ruta);
-        await uploadBytes(r, comprimida);
-        const url = await getDownloadURL(r);
-        // La miniatura la genera la extensión Resize Images de forma
-        // asíncrona; guardamos su ruta por convención (_600x600) y el
-        // componente FotoProducto cae al original mientras no exista.
-        const thumb = url.replace(/(\.[a-z]+)\?/, "_600x600$1?");
-        imagenes.push({ url, thumb, orden: i });
+      let orden = 0;
+      for (const grupo of grupos) {
+        const files = archivos[grupo] ? [...archivos[grupo]] : [];
+        for (const file of files) {
+          const comprimida = await imageCompression(file, {
+            maxSizeMB: 0.4, maxWidthOrHeight: 1600, useWebWorker: true,
+          });
+          const ruta = `products/${id}/${Date.now()}-${orden}.jpg`;
+          const r = sRef(storage, ruta);
+          await uploadBytes(r, comprimida);
+          const url = await getDownloadURL(r);
+          const thumb = url.replace(/(\.[a-z]+)\?/, "_600x600$1?");
+          imagenes.push({ url, thumb, orden, color: grupo || null });
+          orden++;
+        }
       }
 
       // 2. Documento del producto
@@ -342,14 +364,19 @@ function NuevaPrenda({ onGuardado }) {
         creado: serverTimestamp(),
       });
 
-      // 3. Variantes con stock inicial + movimiento de entrada
-      for (const [talla, stockTxt] of conStock) {
-        const stock = parseInt(stockTxt, 10) || 0;
-        const sku = `${id.toUpperCase().replace("-", "")}-${talla}`;
+      // 3. Variantes color+talla con movimiento de entrada
+      for (const [clave, stockTxt] of entradas) {
+        const [color, talla] = clave.split("|");
+        const cantidad = parseInt(stockTxt, 10) || 0;
+        const sku = skuDe(id, color, talla);
         await runTransaction(db, async (tx) => {
-          tx.set(doc(db, "products", id, "variants", sku), { talla, stock });
+          tx.set(doc(db, "products", id, "variants", sku), {
+            talla,
+            color: color || null,
+            stock: cantidad,
+          });
           await registrarMovimiento(tx, {
-            productId: id, sku, tipo: "entrada", cantidad: stock, motivo: "Alta de prenda",
+            productId: id, sku, tipo: "entrada", cantidad, motivo: "Alta de prenda",
           });
         });
       }
@@ -365,7 +392,7 @@ function NuevaPrenda({ onGuardado }) {
   return (
     <form onSubmit={guardar} style={S.card}>
       <input style={S.input} placeholder="Código (ej. bl-004)" value={f.id} onChange={set("id")} />
-      <input style={S.input} placeholder="Nombre (ej. Blusa lino crudo)" value={f.nombre} onChange={set("nombre")} />
+      <input style={S.input} placeholder="Nombre (ej. Blusa polo tejida)" value={f.nombre} onChange={set("nombre")} />
       {slug && <p style={{ fontSize: 12, color: "var(--piedra)", margin: "-4px 0 10px" }}>URL: /producto/{slug}</p>}
       <input style={S.input} type="number" placeholder="Precio" value={f.precio} onChange={set("precio")} />
       <select style={S.input} value={f.categoria} onChange={set("categoria")}>
@@ -374,23 +401,39 @@ function NuevaPrenda({ onGuardado }) {
         <option value="pantalones">Pantalones</option>
       </select>
       <textarea style={{ ...S.input, minHeight: 60 }} placeholder="Descripción" value={f.descripcion} onChange={set("descripcion")} />
-      <input style={S.input} placeholder="Tela (ej. 100% lino)" value={f.tela} onChange={set("tela")} />
+      <input style={S.input} placeholder="Tela (ej. Tejido de algodón)" value={f.tela} onChange={set("tela")} />
       <input style={S.input} placeholder="Modelo (ej. Mide 1.68 m, usa talla M)" value={f.modelo} onChange={set("modelo")} />
       <input style={S.input} placeholder="Cuidado (ej. Lavado a mano)" value={f.cuidado} onChange={set("cuidado")} />
 
-      <p style={{ fontSize: 13, color: "#6E6A5E", margin: "4px 0 8px" }}>Stock por talla (deja vacía la que no manejes)</p>
-      <div style={{ display: "flex", gap: 8 }}>
-        {["S", "M", "L"].map((t) => (
-          <input key={t} style={{ ...S.input, width: 80 }} type="number" min="0" placeholder={t}
-            value={tallas[t]} onChange={(e) => setTallas({ ...tallas, [t]: e.target.value })} />
-        ))}
-      </div>
-
-      <p style={{ fontSize: 13, color: "#6E6A5E", margin: "4px 0 8px" }}>
-        Fotos (la primera es la de portada — se comprimen solas antes de subir)
+      <p style={{ fontSize: 13, color: "#6E6A5E", margin: "4px 0 4px" }}>
+        Colores (separados por coma — déjalo vacío si es de un solo color)
       </p>
-      <input style={S.input} type="file" accept="image/*" multiple
-        onChange={(e) => setArchivos([...e.target.files])} />
+      <input style={S.input} placeholder="Ej. Rojo, Rosa, Beige, Negro, Crema"
+        value={coloresTxt} onChange={(e) => setColoresTxt(e.target.value)} />
+
+      {grupos.map((grupo) => (
+        <div key={grupo || "unico"} style={{
+          border: "1px solid var(--linea)", borderRadius: 4,
+          padding: 12, marginBottom: 10,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
+            {grupo || "Stock por talla"}
+          </p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            {["S", "M", "L"].map((t) => (
+              <input key={t} style={{ ...S.input, width: 80, marginBottom: 0 }} type="number" min="0"
+                placeholder={t}
+                value={stock[claveStock(grupo, t)] ?? ""}
+                onChange={(e) => setStock({ ...stock, [claveStock(grupo, t)]: e.target.value })} />
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: "#6E6A5E", margin: "0 0 6px" }}>
+            Fotos {grupo ? `de ${grupo}` : "(la primera es la portada)"}
+          </p>
+          <input style={{ ...S.input, marginBottom: 0 }} type="file" accept="image/*" multiple
+            onChange={(e) => setArchivos({ ...archivos, [grupo]: e.target.files })} />
+        </div>
+      ))}
 
       {error && <p style={{ color: "#8C3A1E", fontSize: 13, marginBottom: 10 }}>{error}</p>}
       <button style={{ ...S.btn, width: "100%", padding: 12 }} disabled={subiendo}>

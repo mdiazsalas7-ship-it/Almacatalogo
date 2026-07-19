@@ -22,7 +22,7 @@ export default function Catalogo({ productos }) {
     <div className="contenedor ancho">
       <header style={{ padding: "30px 20px 8px", textAlign: "center" }}>
         <img
-          src="/logo.png"
+          src="/logo.jpg"
           alt={MARCA}
           style={{
             width: 84,
@@ -87,7 +87,10 @@ export default function Catalogo({ productos }) {
       >
         {visibles.map((p) => {
           const agotado = p.variants.every((v) => v.stock === 0);
-          const disponibles = p.variants.filter((v) => v.stock > 0).map((v) => v.talla);
+          const colores = [...new Set(p.variants.map((v) => v.color).filter(Boolean))];
+          const disponibles = colores.length
+            ? [colores.length + (colores.length === 1 ? " color" : " colores")]
+            : [...new Set(p.variants.filter((v) => v.stock > 0).map((v) => v.talla))];
           return (
             <Link key={p.id} href={`/producto/${p.slug}`}>
               <div style={{ position: "relative", borderRadius: 3, overflow: "hidden" }}>
