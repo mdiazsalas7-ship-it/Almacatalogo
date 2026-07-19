@@ -5,7 +5,7 @@
   --piedra: #8A8577;
   --linea: #EBE7DC;
   --linea-fuerte: #D8D3C6;
-  --oliva: #3D4A32;
+  --oro: #8A6A2B;
   --alerta: #8C5A2E;
 }
 
@@ -57,7 +57,7 @@ img { display: block; max-width: 100%; }
   padding: 14px;
   border-radius: 4px;
   border: none;
-  background: var(--oliva);
+  background: var(--oro);
   color: var(--hueso);
   font-size: 15px;
   font-weight: 500;
@@ -68,4 +68,4 @@ img { display: block; max-width: 100%; }
 .sin-scrollbar { scrollbar-width: none; }
 .sin-scrollbar::-webkit-scrollbar { display: none; }
 
-:focus-visible { outline: 2px solid var(--oliva); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }

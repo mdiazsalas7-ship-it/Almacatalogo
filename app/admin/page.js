@@ -151,7 +151,7 @@ export default function Admin() {
         <h1 className="serif" style={{ fontSize: 22, letterSpacing: "0.06em" }}>Admin</h1>
         <div style={{ display: "flex", gap: 8 }}>
           {hayCambios && (
-            <button style={{ ...S.btn, background: "var(--oliva)", borderColor: "var(--oliva)" }} onClick={publicar}>
+            <button style={{ ...S.btn, background: "var(--oro)", borderColor: "var(--oro)" }} onClick={publicar}>
               Publicar cambios
             </button>
           )}
@@ -162,7 +162,7 @@ export default function Admin() {
       {aviso && (
         <p style={{
           background: aviso.startsWith("✗") ? "#F7E8E0" : "#EBEFE4",
-          color: aviso.startsWith("✗") ? "#8C3A1E" : "var(--oliva)",
+          color: aviso.startsWith("✗") ? "#8C3A1E" : "var(--oro)",
           padding: "10px 14px", borderRadius: 4, fontSize: 13, marginBottom: 14,
         }}>{aviso}</p>
       )}
@@ -264,7 +264,7 @@ function Historial({ movs }) {
         <div key={m.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--linea)", fontSize: 13 }}>
           <span style={{
             fontWeight: 500,
-            color: m.tipo === "venta" ? "var(--oliva)" : "var(--alerta)",
+            color: m.tipo === "venta" ? "var(--oro)" : "var(--alerta)",
           }}>
             {m.tipo === "venta" ? "Venta" : "Ajuste"}
           </span>

@@ -20,9 +20,22 @@ export default function Catalogo({ productos }) {
 
   return (
     <div className="contenedor ancho">
-      <header style={{ padding: "34px 20px 8px", textAlign: "center" }}>
-        <h1 className="serif" style={{ fontSize: 30, letterSpacing: "0.14em" }}>
-          {MARCA}
+      <header style={{ padding: "30px 20px 8px", textAlign: "center" }}>
+        <img
+          src="/logo.png"
+          alt={MARCA}
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: "50%",
+            objectFit: "cover",
+            margin: "0 auto 12px",
+            border: "1px solid var(--linea-fuerte)",
+          }}
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+        />
+        <h1 className="serif" style={{ fontSize: 26, letterSpacing: "0.14em" }}>
+          {MARCA.toUpperCase()}
         </h1>
         <p style={{ fontSize: 12.5, color: "var(--piedra)", letterSpacing: "0.14em", marginTop: 6 }}>
           {LEMA}

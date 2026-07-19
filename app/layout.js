@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "ALMA — Catálogo",
-  description: "Ropa hecha con calma. Pedidos por WhatsApp, envíos a todo el país.",
+  title: "A&E Boutique — Catálogo",
+  description: "A&E Boutique. Pedidos por WhatsApp, envíos a todo el país.",
 };
 
 export default function RootLayout({ children }) {
