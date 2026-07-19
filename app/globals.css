@@ -6,6 +6,8 @@
   --linea: #EBE7DC;
   --linea-fuerte: #D8D3C6;
   --oro: #8A6A2B;
+  --oro-claro: #C9A227;
+  --linea-oro: #E4D9C0;
   --alerta: #8C5A2E;
 }
 
@@ -47,7 +49,7 @@ img { display: block; max-width: 100%; }
   white-space: nowrap;
   transition: all 0.15s ease;
 }
-.chip.activo { background: var(--tinta); color: var(--hueso); border-color: var(--tinta); }
+.chip.activo { background: var(--oro); color: var(--hueso); border-color: var(--oro); }
 .chip:disabled { color: #B9B4A8; text-decoration: line-through; cursor: default; }
 
 .boton-wa {

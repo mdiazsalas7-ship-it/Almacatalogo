@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import FotoProducto from "./FotoProducto";
-import { MARCA, WHATSAPP, fmtPrecio } from "@/lib/config";
+import { MARCA, WHATSAPP, fmtPrecio, colorVisual } from "@/lib/config";
 
 export default function FichaProducto({ producto: p }) {
   const [talla, setTalla] = useState(null);
@@ -126,7 +126,14 @@ export default function FichaProducto({ producto: p }) {
                     className={`chip ${color === c ? "activo" : ""}`}
                     disabled={sinStock}
                     onClick={() => elegirColor(c)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                   >
+                    <span style={{
+                      width: 10, height: 10, borderRadius: "50%",
+                      background: colorVisual(c),
+                      border: "0.5px solid " + (color === c ? "var(--hueso)" : "var(--linea-fuerte)"),
+                      flexShrink: 0,
+                    }} />
                     {c}
                   </button>
                 );
