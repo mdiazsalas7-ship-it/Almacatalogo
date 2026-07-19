@@ -1,0 +1,53 @@
+[
+  {
+    "id": "bl-004",
+    "nombre": "Blusa lino crudo",
+    "slug": "blusa-lino-crudo",
+    "precio": 420,
+    "categoria": "blusas",
+    "activo": true,
+    "descripcion": "Corte holgado, manga tres cuartos. Botones de concha natural.",
+    "tela": "100% lino",
+    "modelo": "Mide 1.68 m, usa talla M",
+    "cuidado": "Lavado a mano, agua fría",
+    "variants": [
+      { "sku": "BL004-S", "talla": "S", "stock": 2 },
+      { "sku": "BL004-M", "talla": "M", "stock": 4 },
+      { "sku": "BL004-L", "talla": "L", "stock": 0 }
+    ]
+  },
+  {
+    "id": "ve-011",
+    "nombre": "Vestido midi negro",
+    "slug": "vestido-midi-negro",
+    "precio": 780,
+    "categoria": "vestidos",
+    "activo": true,
+    "descripcion": "Escote cuadrado, falda evasé. Cierre invisible en espalda.",
+    "tela": "Viscosa con caída",
+    "modelo": "Mide 1.70 m, usa talla S",
+    "cuidado": "Lavado en máquina, ciclo suave",
+    "variants": [
+      { "sku": "VE011-S", "talla": "S", "stock": 3 },
+      { "sku": "VE011-M", "talla": "M", "stock": 2 },
+      { "sku": "VE011-L", "talla": "L", "stock": 1 }
+    ]
+  },
+  {
+    "id": "pa-002",
+    "nombre": "Pantalón sastre beige",
+    "slug": "pantalon-sastre-beige",
+    "precio": 650,
+    "categoria": "pantalones",
+    "activo": true,
+    "descripcion": "Tiro alto, pierna recta. Pinzas al frente y bolsillos laterales.",
+    "tela": "Gabardina de algodón",
+    "modelo": "Mide 1.65 m, usa talla M",
+    "cuidado": "Lavado en máquina, agua fría",
+    "variants": [
+      { "sku": "PA002-S", "talla": "S", "stock": 0 },
+      { "sku": "PA002-M", "talla": "M", "stock": 5 },
+      { "sku": "PA002-L", "talla": "L", "stock": 2 }
+    ]
+  }
+]
