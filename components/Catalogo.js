@@ -22,7 +22,7 @@ export default function Catalogo({ productos }) {
     <div className="contenedor ancho">
       <header style={{ padding: "30px 20px 8px", textAlign: "center" }}>
         <img
-          src="/logo.jpg"
+          src="/logo.png"
           alt={MARCA}
           style={{
             width: 84,
